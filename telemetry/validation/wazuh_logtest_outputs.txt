@@ -1,0 +1,58 @@
+================================================================================
+WAZUH-LOGTEST VALIDATION TRACE - wazuh-soc-detection-lab
+Engine: Wazuh Manager v4.9.x (/var/ossec/bin/wazuh-logtest)
+Ruleset: /var/ossec/etc/rules/local_rules.xml (Rules 100101, 100102)
+================================================================================
+
+--------------------------------------------------------------------------------
+TEST CASE 1: T1059.001 - Suspicious Obfuscated/Encoded PowerShell Execution
+Input File : telemetry/raw_logs/sysmon_eid1_powershell.json
+--------------------------------------------------------------------------------
+Starting wazuh-logtest v4.9.0
+Type one log per line
+
+**Phase 1: Completed pre-decoding.
+**Phase 2: Completed decoding.
+	name: 'json'
+	win.eventdata.commandLine: 'powershell.exe -NoP -NonI -W Hidden -EncodedCommand VwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAiAFcAYQB6AHUAaAAgAFMATwBDACAATABhAGIAIAAtACAAVA...'
+	win.eventdata.image: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+	win.system.channel: 'Microsoft-Windows-Sysmon/Operational'
+	win.system.eventID: '1'
+
+**Phase 3: Completed filtering (rules).
+	id: '100101'
+	level: '12'
+	description: 'Sysmon Event 1: Suspicious Obfuscated or Base64-Encoded PowerShell Execution Detected on WS-SOC-ENDPOINT01.corp.local'
+	groups: '["local","sysmon","windows","soc_detection_lab","sysmon_event1","powershell","execution","defense_evasion","pca"]'
+	firedtimes: '1'
+	mitre.id: '["T1059.001","T1027"]'
+	mitre.tactic: '["Execution","Defense Evasion"]'
+	mitre.technique: '["PowerShell","Obfuscated Files or Information"]'
+**Alert to be generated.
+
+--------------------------------------------------------------------------------
+TEST CASE 2: T1003.001 - Potential Credential Dumping via LSASS Memory Access
+Input File : telemetry/raw_logs/sysmon_eid10_lsass.json
+--------------------------------------------------------------------------------
+Starting wazuh-logtest v4.9.0
+Type one log per line
+
+**Phase 1: Completed pre-decoding.
+**Phase 2: Completed decoding.
+	name: 'json'
+	win.eventdata.grantedAccess: '0x1410'
+	win.eventdata.sourceImage: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+	win.eventdata.targetImage: 'C:\\Windows\\system32\\lsass.exe'
+	win.system.channel: 'Microsoft-Windows-Sysmon/Operational'
+	win.system.eventID: '10'
+
+**Phase 3: Completed filtering (rules).
+	id: '100102'
+	level: '14'
+	description: 'Sysmon Event 10: Suspicious LSASS Memory Read Access (0x1410) by C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe on WS-SOC-ENDPOINT01.corp.local'
+	groups: '["local","sysmon","windows","soc_detection_lab","sysmon_event10","credential_access","lsass_dump","gdpr_IV_35.7.d"]'
+	firedtimes: '1'
+	mitre.id: '["T1003.001"]'
+	mitre.tactic: '["Credential Access"]'
+	mitre.technique: '["LSASS Memory"]'
+**Alert to be generated.

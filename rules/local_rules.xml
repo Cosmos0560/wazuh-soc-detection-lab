@@ -1,0 +1,52 @@
+<!--
+  Wazuh Custom Detection Rules - wazuh-soc-detection-lab
+  Detection-as-Code (DaC) Engine: Sysmon Telemetry Rules
+-->
+<group name="local,sysmon,windows,soc_detection_lab,">
+
+  <!--
+    Rule 100101: Suspicious Encoded / Obfuscated PowerShell Execution
+    MITRE ATT&CK: T1059.001 (Command and Scripting Interpreter: PowerShell)
+    Telemetry Source: Microsoft-Windows-Sysmon/Operational EventID 1 (Process Creation)
+    Parent Rule: 61603 (Sysmon - Event 1: Process Creation)
+  -->
+  <rule id="100101" level="12">
+    <if_sid>61603</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\(powershell|pwsh)\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(?:\s|/|-)e(?:nc(?:odedcommand)?|c)?\s+[A-Za-z0-9+/=]{16,}|frombase64string|-w(?:indowstyle)?\s+hidden|-nop(?:rofile)?\s+.*-noni(?:nteractive)?</field>
+    <description>Sysmon Event 1: Suspicious Obfuscated or Base64-Encoded PowerShell Execution Detected on $(win.system.computer)</description>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1027</id>
+    </mitre>
+    <options>no_full_log</options>
+    <group>sysmon_event1,powershell,execution,defense_evasion,pca,</group>
+  </rule>
+
+  <!--
+    Rule 100102: Potential Credential Dumping via LSASS Process Memory Access
+    MITRE ATT&CK: T1003.001 (OS Credential Dumping: LSASS Memory)
+    Telemetry Source: Microsoft-Windows-Sysmon/Operational EventID 10 (ProcessAccess)
+    Parent Rule: 61612 (Sysmon - Event 10: Process accessed)
+    GrantedAccess Masks:
+      0x0010 (PROCESS_VM_READ)
+      0x1010 (PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ)
+      0x1410 (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ)
+      0x1438 (PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE)
+      0x143a (Mimikatz / standard credential dumper mask)
+      0x1fffff (PROCESS_ALL_ACCESS)
+  -->
+  <rule id="100102" level="14">
+    <if_sid>61612</if_sid>
+    <field name="win.eventdata.targetImage" type="pcre2">(?i)\\lsass\.exe$</field>
+    <field name="win.eventdata.grantedAccess" type="pcre2">(?i)^0x(0010|1010|1410|1438|143a|1fffff)$</field>
+    <field name="win.eventdata.sourceImage" negate="yes" type="pcre2">(?i)^C:\\(Windows\\System32\\(wbem\\wmiprvse|svchost|lsass|taskmgr|mrt|csrss)|Program Files\\Windows Defender\\MsMpEng)\.exe$</field>
+    <description>Sysmon Event 10: Suspicious LSASS Memory Read Access ($(win.eventdata.grantedAccess)) by $(win.eventdata.sourceImage) on $(win.system.computer)</description>
+    <mitre>
+      <id>T1003.001</id>
+    </mitre>
+    <options>no_full_log</options>
+    <group>sysmon_event10,credential_access,lsass_dump,gdpr_IV_35.7.d,</group>
+  </rule>
+
+</group>
