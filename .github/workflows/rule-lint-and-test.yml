@@ -1,0 +1,36 @@
+name: Detection Engineering CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install XML Linting Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libxml2-utils
+
+      - name: Validate Custom Wazuh Rules (XML Lint)
+        run: |
+          echo "Linting rules/local_rules.xml..."
+          xmllint --noout rules/local_rules.xml
+
+      - name: Validate Sysmon Configuration (XML Lint)
+        run: |
+          echo "Linting configs/sysmon/sysmon-modular-config.xml..."
+          xmllint --noout configs/sysmon/sysmon-modular-config.xml
+
+      - name: Validate Telemetry JSON Payloads
+        run: |
+          echo "Validating JSON telemetry logs..."
+          python3 -m json.tool telemetry/raw_logs/sysmon_eid1_powershell.json > /dev/null
+          python3 -m json.tool telemetry/raw_logs/sysmon_eid10_lsass.json > /dev/null
+          echo "All detection rules and telemetry schemas passed verification!"
